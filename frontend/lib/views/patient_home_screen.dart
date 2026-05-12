@@ -1,15 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/api_service.dart';
+import 'patient/search_results_screen.dart';
 
-class PatientHomeScreen extends StatelessWidget {
+class PatientHomeScreen extends StatefulWidget {
   const PatientHomeScreen({super.key});
+
+  @override
+  State<PatientHomeScreen> createState() => _PatientHomeScreenState();
+}
+
+class _PatientHomeScreenState extends State<PatientHomeScreen> {
+  int _currentIndex = 0;
+  final TextEditingController _searchController = TextEditingController();
+  bool _isAvailableOnly = false;
+
+  final List<Widget> _pages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _pages.addAll([
+      PatientHomeView(
+        searchController: _searchController,
+        isAvailableOnly: _isAvailableOnly,
+        onToggleAvailable: () => setState(() => _isAvailableOnly = !_isAvailableOnly),
+        onSearch: (query) => _handleSearch(context, query),
+      ),
+      const Center(child: Text('Appointments Page')),
+      const Center(child: Text('Profile Page')),
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
+      appBar: _currentIndex == 0 ? AppBar(
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
           'Docy',
@@ -20,13 +48,114 @@ class PatientHomeScreen extends StatelessWidget {
           ),
         ),
         centerTitle: false,
+      ) : null,
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          PatientHomeView(
+            searchController: _searchController,
+            isAvailableOnly: _isAvailableOnly,
+            onToggleAvailable: () => setState(() => _isAvailableOnly = !_isAvailableOnly),
+            onSearch: (query) => _handleSearch(context, query),
+          ),
+          const PatientAppointmentsView(),
+          const Center(child: Text('Profile Page')),
+        ],
       ),
-      body: SingleChildScrollView(
+      extendBody: true, // Allows body to go behind bottom nav for the pill effect
+      bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          padding: const EdgeInsets.only(bottom: 24),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B3C40),
+                borderRadius: BorderRadius.circular(40),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1B3C40).withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildNavItem(0, Icons.home_rounded, 'Home'),
+                  const SizedBox(width: 12),
+                  _buildNavItem(1, Icons.calendar_month_rounded, 'Appointments'),
+                  const SizedBox(width: 12),
+                  _buildNavItem(2, Icons.person_rounded, 'Profile'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData icon, String label) {
+    final isSelected = _currentIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _currentIndex = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          color: isSelected ? const Color(0xFF1B3C40) : Colors.white.withOpacity(0.7),
+          size: 24,
+        ),
+      ),
+    );
+  }
+
+  void _handleSearch(BuildContext context, String query) {
+    if (query.trim().isEmpty) return;
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SearchResultsScreen(
+          query: query,
+          availableOnly: _isAvailableOnly,
+        ),
+      ),
+    );
+  }
+}
+
+class PatientHomeView extends StatelessWidget {
+  final TextEditingController searchController;
+  final bool isAvailableOnly;
+  final VoidCallback onToggleAvailable;
+  final Function(String) onSearch;
+
+  const PatientHomeView({
+    super.key,
+    required this.searchController,
+    required this.isAvailableOnly,
+    required this.onToggleAvailable,
+    required this.onSearch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 120), // Extra padding for bottom nav
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 12),
               // Search Bar
               Container(
                 decoration: BoxDecoration(
@@ -41,10 +170,20 @@ class PatientHomeScreen extends StatelessWidget {
                   ],
                 ),
                 child: TextField(
+                  controller: searchController,
+                  onSubmitted: onSearch,
                   decoration: InputDecoration(
-                    hintText: "Search by doctor's name",
+                    hintText: "Search by doctor's name or symptom",
                     hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
                     prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        isAvailableOnly ? Icons.event_available : Icons.event_note,
+                        color: isAvailableOnly ? const Color(0xFF1B3C40) : Colors.grey,
+                      ),
+                      onPressed: onToggleAvailable,
+                      tooltip: "Toggle Available Only",
+                    ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 15),
                   ),
@@ -114,21 +253,188 @@ class PatientHomeScreen extends StatelessWidget {
             ],
           ),
         ),
+      );
+    }
+}
+
+class PatientAppointmentsView extends StatelessWidget {
+  const PatientAppointmentsView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Your Appointments',
+            style: GoogleFonts.inter(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildActiveAppointmentCard(),
+          const SizedBox(height: 24),
+          Text(
+            'Recent History',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildHistoryItem('Dr. Sara Khan', 'Dermatologist', 'May 10, 2026', 'Completed'),
+          _buildHistoryItem('Dr. Usman Ali', 'Orthopedic', 'May 05, 2026', 'Completed'),
+        ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF1B3C40),
-        unselectedItemColor: Colors.grey,
-        currentIndex: 1, // 'Doctor' selected
-        selectedLabelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500),
-        unselectedLabelStyle: GoogleFonts.inter(fontSize: 12),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Doctor'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: 'Market'),
-          BottomNavigationBarItem(icon: Icon(Icons.group_outlined), label: 'Group'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications_none), label: 'Notification'),
+    );
+  }
+
+  Widget _buildActiveAppointmentCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1B3C40),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1B3C40).withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.access_time, color: Colors.white, size: 14),
+                    SizedBox(width: 6),
+                    Text(
+                      'Upcoming Appointment',
+                      style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              const Icon(Icons.more_horiz, color: Colors.white70),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              const CircleAvatar(
+                radius: 24,
+                backgroundColor: Colors.white24,
+                child: Icon(Icons.person, color: Colors.white),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Dr. Ahmed Hassan',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      'Cardiologist • Online',
+                      style: GoogleFonts.inter(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.videocam, color: Color(0xFF1B3C40), size: 20),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.calendar_month, color: Colors.white70, size: 16),
+                SizedBox(width: 8),
+                Text(
+                  'Tomorrow, 10:30 AM',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryItem(String name, String specialty, String date, String status) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: const Color(0xFF1B3C40).withOpacity(0.1),
+            child: const Icon(Icons.person, color: Color(0xFF1B3C40)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                Text('$specialty • $date', style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600])),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.green[50],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              status,
+              style: GoogleFonts.inter(color: Colors.green[700], fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+          ),
         ],
       ),
     );

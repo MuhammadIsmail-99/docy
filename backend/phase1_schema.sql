@@ -134,3 +134,51 @@ CREATE POLICY "brief_access" ON public.triage_briefs FOR ALL USING (
         WHERE c.id = conversation_id AND c.patient_id = auth.uid()
     )
 );
+
+-- t24: Vector Index and Search Function
+CREATE INDEX IF NOT EXISTS doctors_embedding_idx ON public.doctors USING hnsw (embedding vector_cosine_ops);
+
+CREATE OR REPLACE FUNCTION match_doctors(
+  query_embedding vector(768),
+  match_specialty text,
+  match_city text DEFAULT NULL,
+  available_only boolean DEFAULT false,
+  match_threshold float DEFAULT 0.5,
+  match_count int DEFAULT 5
+)
+RETURNS TABLE (
+  id uuid,
+  full_name text,
+  specialization text,
+  city text,
+  experience_years int,
+  consultation_fee int,
+  rating numeric,
+  is_available boolean,
+  similarity float
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    d.id,
+    p.full_name,
+    d.specialization,
+    d.city,
+    d.experience_years,
+    d.consultation_fee,
+    d.rating,
+    d.is_available,
+    1 - (d.embedding <=> query_embedding) AS similarity
+  FROM doctors d
+  JOIN profiles p ON d.id = p.id
+  WHERE d.verification_status = 'verified'
+    AND d.specialization = match_specialty
+    AND (match_city IS NULL OR d.city ILIKE '%' || match_city || '%')
+    AND (available_only = false OR d.is_available = true)
+    AND 1 - (d.embedding <=> query_embedding) > match_threshold
+  ORDER BY similarity DESC
+  LIMIT match_count;
+END;
+$$;

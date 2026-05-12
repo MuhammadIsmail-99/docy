@@ -22,4 +22,16 @@ class ApiService {
       rethrow;
     }
   }
+
+  Future<List<dynamic>> searchDoctors({required String query, bool availableOnly = false}) async {
+    try {
+      final response = await _dio.post('/ai/search-doctors', data: {
+        'query': query,
+        'available_only': availableOnly,
+      });
+      return response.data as List<dynamic>;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
