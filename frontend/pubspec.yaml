@@ -1,5 +1,5 @@
 name: frontend
-description: "A new Flutter project."
+description: "Smart Doctor Connect AI — Flutter frontend."
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -7,12 +7,25 @@ environment:
   sdk: ^3.11.4
 
 dependencies:
-  dio: ^5.9.2
   flutter:
     sdk: flutter
-  google_fonts: ^8.1.0
-  intl: ^0.20.2
+
+  # Supabase
   supabase_flutter: ^2.12.4
+
+  # HTTP
+  dio: ^5.9.2
+
+  # UI
+  google_fonts: ^8.1.0
+  flutter_animate: ^4.5.0
+  shimmer: ^3.0.0
+  cached_network_image: ^3.3.1
+
+  # Utils
+  intl: ^0.20.2
+  url_launcher: ^6.2.6
+  uuid: ^4.4.0
 
 dev_dependencies:
   flutter_test:

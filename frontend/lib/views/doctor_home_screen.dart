@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../services/auth_service.dart';
-import '../../services/doctor_service.dart';
-import '../../models/doctor_model.dart';
+import '../services/auth_service.dart';
+import '../services/doctor_service.dart';
+import '../models/doctor_model.dart';
 import 'doctor/profile_screen.dart';
 import 'doctor/availability_screen.dart';
+import 'doctor/doctor_appointments_screen.dart';
 
 class DoctorHomeScreen extends StatefulWidget {
   const DoctorHomeScreen({super.key});
@@ -41,10 +42,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
+    if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     if (_doctor == null) {
       return Scaffold(
         body: Center(
@@ -67,7 +65,9 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
         title: Text('Docy for Doctors', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            onPressed: () => AuthService().signOut(),
+            onPressed: () async {
+              await AuthService().signOut();
+            },
             icon: const Icon(Icons.logout),
           ),
         ],
@@ -79,10 +79,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
           children: [
             _buildStatusHeader(isVerified),
             const SizedBox(height: 32),
-            Text(
-              'Your Dashboard',
-              style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+            Text('Your Dashboard', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             GridView.count(
               crossAxisCount: 2,
@@ -91,34 +88,20 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
               mainAxisSpacing: 16,
               crossAxisSpacing: 16,
               children: [
-                _buildDashboardCard(
-                  'Profile',
-                  Icons.person_outline,
-                  const Color(0xFFE0F2FE),
-                  const Color(0xFF0284C7),
-                  () => Navigator.push(context, MaterialPageRoute(builder: (context) => DoctorProfileScreen())),
-                ),
-                _buildDashboardCard(
-                  'Availability',
-                  Icons.calendar_today_outlined,
-                  const Color(0xFFF0FDF4),
-                  const Color(0xFF16A34A),
-                  () => Navigator.push(context, MaterialPageRoute(builder: (context) => DoctorAvailabilityScreen())),
-                ),
-                _buildDashboardCard(
-                  'Appointments',
-                  Icons.assignment_outlined,
-                  const Color(0xFFFFF7ED),
-                  const Color(0xFFEA580C),
-                  isVerified ? () {} : null,
-                ),
-                _buildDashboardCard(
-                  'Reviews',
-                  Icons.star_outline,
-                  const Color(0xFFFAF5FF),
-                  const Color(0xFF9333EA),
-                  isVerified ? () {} : null,
-                ),
+                _buildDashboardCard('Profile', Icons.person_outline, const Color(0xFFE0F2FE),
+                    const Color(0xFF0284C7),
+                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => DoctorProfileScreen()))),
+                _buildDashboardCard('Availability', Icons.calendar_today_outlined, const Color(0xFFF0FDF4),
+                    const Color(0xFF16A34A),
+                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => DoctorAvailabilityScreen()))),
+                _buildDashboardCard('Appointments', Icons.assignment_outlined, const Color(0xFFFFF7ED),
+                    const Color(0xFFEA580C),
+                    isVerified
+                        ? () => Navigator.push(
+                            context, MaterialPageRoute(builder: (_) => const DoctorAppointmentsScreen()))
+                        : null),
+                _buildDashboardCard('Reviews', Icons.star_outline, const Color(0xFFFAF5FF),
+                    const Color(0xFF9333EA), isVerified ? () {} : null),
               ],
             ),
             if (isVerified) ...[
@@ -141,11 +124,8 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
       ),
       child: Row(
         children: [
-          Icon(
-            isVerified ? Icons.verified : Icons.hourglass_empty,
-            color: isVerified ? Colors.white : Colors.amber[700],
-            size: 32,
-          ),
+          Icon(isVerified ? Icons.verified : Icons.hourglass_empty,
+              color: isVerified ? Colors.white : Colors.amber[700], size: 32),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -154,18 +134,15 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                 Text(
                   isVerified ? 'Verified Account' : 'Profile Under Review',
                   style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    color: isVerified ? Colors.white : Colors.amber[900],
-                  ),
+                      fontWeight: FontWeight.bold,
+                      color: isVerified ? Colors.white : Colors.amber[900]),
                 ),
                 Text(
-                  isVerified 
-                    ? 'Your profile is active and visible to patients.'
-                    : 'We are reviewing your credentials. This usually takes 24-48 hours.',
+                  isVerified
+                      ? 'Your profile is active and visible to patients.'
+                      : 'We are reviewing your credentials. Usually 24-48 hours.',
                   style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: isVerified ? Colors.white70 : Colors.amber[800],
-                  ),
+                      fontSize: 12, color: isVerified ? Colors.white70 : Colors.amber[800]),
                 ),
               ],
             ),
@@ -175,8 +152,8 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
     );
   }
 
-  Widget _buildDashboardCard(String title, IconData icon, Color bgColor, Color iconColor, VoidCallback? onTap) {
-    final bool isDisabled = onTap == null;
+  Widget _buildDashboardCard(
+      String title, IconData icon, Color bgColor, Color iconColor, VoidCallback? onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -184,32 +161,20 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Opacity(
-          opacity: isDisabled ? 0.5 : 1.0,
+          opacity: onTap == null ? 0.5 : 1.0,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
                 child: Icon(icon, color: iconColor, size: 28),
               ),
               const SizedBox(height: 12),
-              Text(
-                title,
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-              ),
+              Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -231,14 +196,9 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Available for Instant Booking',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'Patients can see you as "Available Now"',
-                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600]),
-                ),
+                Text('Available for Instant Booking', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                Text('Patients see you as "Available Now"',
+                    style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600])),
               ],
             ),
           ),
@@ -248,7 +208,6 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
             onChanged: (value) async {
               setState(() => _doctor = _doctor!.copyWith(isAvailable: value));
               await _doctorService.toggleAvailability(_doctor!.id, value);
-              _loadDoctorData();
             },
           ),
         ],
