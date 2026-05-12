@@ -12,17 +12,7 @@
 .env.local
 .env.*.local
 
-# Node.js
-node_modules/
-.next/
-out/
-build/
-dist/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Python
+# Python (Backend)
 __pycache__/
 *.py[cod]
 *$py.class
@@ -31,6 +21,31 @@ env/
 .env
 .venv
 .pytest_cache/
+
+# Flutter/Dart (Frontend)
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+ios/.generated/
+ios/Flutter/Ephemeral/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/App.framework
+ios/Flutter/App.podspec
+macos/Flutter/ephemeral/
+linux/flutter/ephemeral/
+windows/flutter/ephemeral/
+android/app/src/main/res/drawable-mdpi/
+android/app/src/main/res/drawable-hdpi/
+android/app/src/main/res/drawable-xhdpi/
+android/app/src/main/res/drawable-xxhdpi/
+android/app/src/main/res/drawable-xxxhdpi/
+*.key
+*.pub
+*.keystore
+*.jks
 
 # OS
 .DS_Store
