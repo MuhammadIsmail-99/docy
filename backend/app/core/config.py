@@ -24,6 +24,19 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "CHANGEME_SECRET_KEY" # Should be in .env
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+    
+    # Gemini
+    GEMINI_API_KEY: str = ""
+    
+    # Supabase
+    SUPABASE_URL: str = ""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
+    
+    # Resend
+    RESEND_API_KEY: str = ""
+    
+    # Redis
+    REDIS_URL: str = "redis://localhost:6379/0"
 
     class Config:
         case_sensitive = True

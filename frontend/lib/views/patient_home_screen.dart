@@ -12,7 +12,7 @@ class PatientHomeScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          'Kiddie Doctors',
+          'Docy',
           style: GoogleFonts.inter(
             color: Colors.black,
             fontWeight: FontWeight.bold,

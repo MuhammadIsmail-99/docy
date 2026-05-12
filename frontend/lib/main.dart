@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'views/patient_home_screen.dart';
+import 'views/doctor_home_screen.dart';
+import 'views/welcome_screen.dart';
+import 'views/auth/login_screen.dart';
+import 'views/admin/approval_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await Supabase.initialize(
+    url: 'https://ncrofbxunskjtaxlobiv.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jcm9mYnh1bnNranRheGxvYml2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NTU5MzMsImV4cCI6MjA5NDEzMTkzM30.5O2if8mPPYrUSMMG3d2PneE4h6shjnULl0vrmVTghZ8',
+  );
+  
   runApp(const DocyApp());
 }
 
@@ -12,7 +24,7 @@ class DocyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Smart Doctor Connect AI',
+      title: 'Docy',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.light,
@@ -21,8 +33,49 @@ class DocyApp extends StatelessWidget {
         textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
         useMaterial3: true,
       ),
-      home: const PatientHomeScreen(),
+      home: const AuthGate(),
     );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<AuthState>(
+      stream: Supabase.instance.client.auth.onAuthStateChange,
+      builder: (context, snapshot) {
+        final session = Supabase.instance.client.auth.currentSession;
+        if (session != null) {
+          return FutureBuilder<String?>(
+            future: _getUserRole(session.user.id),
+            builder: (context, roleSnapshot) {
+              if (roleSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+              }
+              if (roleSnapshot.data == 'doctor') {
+                return const DoctorHomeScreen();
+              }
+              if (roleSnapshot.data == 'admin') {
+                return const AdminApprovalScreen();
+              }
+              return const PatientHomeScreen();
+            },
+          );
+        }
+        return const WelcomeScreen();
+      },
+    );
+  }
+
+  Future<String?> _getUserRole(String userId) async {
+    final response = await Supabase.instance.client
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+    return response['role'] as String?;
   }
 }
 

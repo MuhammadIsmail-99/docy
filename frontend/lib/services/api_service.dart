@@ -7,12 +7,19 @@ class ApiService {
     receiveTimeout: const Duration(seconds: 3),
   ));
 
-  // Example:
-  // Future<Response> getDoctors() async {
-  //   try {
-  //     return await _dio.get('/doctors');
-  //   } catch (e) {
-  //     rethrow;
-  //   }
-  // }
+  Future<Response> embedDoctor(Map<String, dynamic> data) async {
+    try {
+      return await _dio.post('/ai/embed-doctor', data: data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Response> checkEmail(String email) async {
+    try {
+      return await _dio.post('/auth/check-email', data: {'email': email});
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

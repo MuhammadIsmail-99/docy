@@ -6,6 +6,7 @@ CREATE EXTENSION IF NOT EXISTS pg_cron;
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
   full_name TEXT NOT NULL,
+  email TEXT UNIQUE,
   phone TEXT,
   role TEXT CHECK (role IN ('patient', 'doctor', 'admin')) NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()

@@ -11,3 +11,6 @@ python-multipart
 httpx
 python-dotenv
 redis
+google-generativeai
+supabase
+resend
