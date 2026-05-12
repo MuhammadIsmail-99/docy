@@ -15,7 +15,7 @@ genai.configure(api_key=settings.GEMINI_API_KEY)
 
 async def get_embedding(text):
     result = genai.embed_content(
-        model="models/text-embedding-004",
+        model="models/gemini-embedding-001",
         content=text,
         task_type="retrieval_document",
         title="Doctor Profile"
@@ -50,7 +50,6 @@ async def seed():
             supabase.table("profiles").insert({
                 "id": user_id,
                 "full_name": name,
-                "email": email,
                 "role": "doctor"
             }).execute()
             

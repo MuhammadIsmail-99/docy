@@ -8,7 +8,7 @@ class GeminiService:
 
     async def get_embedding(self, text: str):
         result = genai.embed_content(
-            model="models/text-embedding-004",
+            model="models/gemini-embedding-001",
             content=text,
             task_type="retrieval_document",
             title="Doctor Profile"
