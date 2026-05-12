@@ -3,6 +3,7 @@ import json
 from typing import List, Optional
 from pydantic import BaseModel
 from app.services.gemini import gemini_service
+from app.services.appointments import appointment_service
 from supabase import create_client, Client
 from app.core.config import settings
 
@@ -121,11 +122,16 @@ async def search_doctors(request: SearchRequest):
             # Execute RPC
             rpc_response = supabase.rpc("match_doctors", rpc_params).execute()
             
-            # Enrich with profile data if needed, but match_doctors should return it
+            # Enrich with profile data and earliest slot
+            doctors = rpc_response.data
+            for doc in doctors:
+                slot_info = await appointment_service.get_earliest_slot(doc['id'])
+                doc['earliest_slot'] = slot_info['label'] if slot_info else "No slots soon"
+                
             results.append({
                 "specialty": specialty,
                 "reason": suggestion["reason"],
-                "doctors": rpc_response.data
+                "doctors": doctors
             })
             
         return results

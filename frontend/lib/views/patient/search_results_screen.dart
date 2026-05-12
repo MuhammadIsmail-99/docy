@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/api_service.dart';
 import '../patient_home_screen.dart';
+import '../../components/doctor_card.dart';
+import 'doctor_profile_screen.dart';
 
 class SearchResultsScreen extends StatefulWidget {
   final String query;
@@ -154,11 +156,20 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             ... (category['doctors'] as List).map((doc) => Padding(
               padding: const EdgeInsets.only(bottom: 20),
               child: DoctorCard(
+                id: doc['id'],
                 name: doc['full_name'],
                 specialty: doc['specialization'],
                 experience: "${doc['experience_years']} years Exp",
                 rating: (doc['rating'] as num).toDouble(),
                 fee: "PKR ${doc['consultation_fee']}",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DoctorProfileScreen(doctorId: doc['id']),
+                    ),
+                  );
+                },
               ),
             )),
           ],

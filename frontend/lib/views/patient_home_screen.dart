@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
+import '../components/doctor_card.dart';
 import 'patient/search_results_screen.dart';
 
 class PatientHomeScreen extends StatefulWidget {
@@ -59,7 +61,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             onSearch: (query) => _handleSearch(context, query),
           ),
           const PatientAppointmentsView(),
-          const Center(child: Text('Profile Page')),
+          const PatientProfileView(),
         ],
       ),
       extendBody: true, // Allows body to go behind bottom nav for the pill effect
@@ -251,10 +253,10 @@ class PatientHomeView extends StatelessWidget {
                 fee: '\$180',
               ),
             ],
-          ),
         ),
-      );
-    }
+      ),
+    );
+  }
 }
 
 class PatientAppointmentsView extends StatelessWidget {
@@ -441,179 +443,108 @@ class PatientAppointmentsView extends StatelessWidget {
   }
 }
 
-class DoctorCard extends StatelessWidget {
-  final String name;
-  final String specialty;
-  final String experience;
-  final double rating;
-  final String fee;
-
-  const DoctorCard({
-    super.key,
-    required this.name,
-    required this.specialty,
-    required this.experience,
-    required this.rating,
-    required this.fee,
-  });
+class PatientProfileView extends StatelessWidget {
+  const PatientProfileView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    final user = AuthService().currentUser;
+    final fullName = user?.userMetadata?['full_name'] ?? 'Guest User';
+    final email = user?.email ?? 'No email available';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
       child: Column(
         children: [
+          // Profile Header
+          const CircleAvatar(
+            radius: 50,
+            backgroundColor: Color(0xFF1B3C40),
+            child: Icon(Icons.person, size: 50, color: Colors.white),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            fullName,
+            style: GoogleFonts.inter(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          Text(
+            email,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 30),
+          
+          // Basic Info Cards
           Row(
             children: [
-              CircleAvatar(
-                radius: 25,
-                backgroundColor: Colors.grey[200],
-                child: const Icon(Icons.person, color: Colors.grey),
-              ),
+              _buildInfoCard('Blood', 'O+', Icons.water_drop, Colors.red),
               const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          name,
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              rating.toString(),
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '$specialty($experience)',
-                      style: GoogleFonts.inter(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildInfoCard('Weight', '72kg', Icons.monitor_weight, Colors.blue),
+              const SizedBox(width: 15),
+              _buildInfoCard('Height', '5.9ft', Icons.height, Colors.green),
             ],
           ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Available Now',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        const Icon(Icons.videocam, color: Colors.green, size: 14),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Video Consult',
-                          style: GoogleFonts.inter(
-                            color: Colors.green,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      fee,
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    Text(
-                      'Consultation Fee',
-                      style: GoogleFonts.inter(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 15),
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B3C40),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Book Appointment',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.chevron_right, color: Colors.white),
-                ],
-              ),
-            ),
-          ),
+          const SizedBox(height: 30),
+          
+          // Menu Items
+          _buildMenuItem(Icons.person_outline, 'Personal Information', () {}),
+          _buildMenuItem(Icons.history, 'Medical History', () {}),
+          _buildMenuItem(Icons.payment, 'Payment Methods', () {}),
+          _buildMenuItem(Icons.settings_outlined, 'Settings', () {}),
+          _buildMenuItem(Icons.help_outline, 'Help & Support', () {}),
+          const Divider(height: 40),
+          _buildMenuItem(Icons.logout, 'Logout', () async {
+            await AuthService().signOut();
+            if (context.mounted) {
+              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+            }
+          }, color: Colors.red),
         ],
       ),
+    );
+  }
+
+  Widget _buildInfoCard(String label, String value, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey[100]!),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 8),
+            Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap, {Color color = Colors.black87}) {
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(icon, color: color),
+      title: Text(
+        title,
+        style: GoogleFonts.inter(
+          color: color,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      trailing: const Icon(Icons.chevron_right, size: 20),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0),
     );
   }
 }

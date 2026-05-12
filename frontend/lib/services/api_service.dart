@@ -34,4 +34,13 @@ class ApiService {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> getEarliestSlot(String doctorId) async {
+    try {
+      final response = await _dio.get('/appointments/slots/earliest', queryParameters: {'doctor_id': doctorId});
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
